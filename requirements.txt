@@ -16,3 +16,5 @@ beautifulsoup4
 python-dotenv
 notebook
 >>>>>>> 8bb0e3d65629520165b8cc3ec05809e492c94c10
+
+

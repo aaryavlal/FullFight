@@ -1,97 +1,37 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FullFight.AI</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <title>🎥 FullFight.AI</title>
+  <!-- make sure style.css lives in your Flask "static" folder -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>🎥 FullFight.AI</h1>
+  <h1>FullFight.AI</h1>
+
+
 
  
-  <form id="fightForm">
-    <label for="query">Enter a fight (e.g., "Jinwoo vs Ant King"):</label><br>
-    <input type="text" id="query" name="query" required>
-    <button type="submit">Find Fight</button>
-  </form>
-  <div id="parsedOutput"></div>
-
-  
   <form id="uploadForm" enctype="multipart/form-data">
-    <label for="files">Upload your episode files:</label><br>
-    <input type="file" name="files" id="files" multiple required>
+    <label for="files">Upload your episode file:</label><br>
+    <input
+      type="file"
+      id="files"
+      name="files"
+      multiple
+      required
+    />
     <button type="submit">Upload</button>
   </form>
   <div id="uploadStatus"></div>
 
-  <button id="compileBtn">Compile Fight</button>
+  <button type="button" id="compile-btn" disabled>
+    Compile (Trim)
+  </button>
   <div id="result"></div>
 
-  <script>
-    let animeData = {};
-    let uploadedFiles = [];
-
-    
-    document.getElementById("fightForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const query = document.getElementById("query").value;
-
-      const res = await fetch("/parse_fight", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query })
-      });
-
-      const data = await res.json();
-      animeData = data;
-      document.getElementById("parsedOutput").innerText =
-        `Anime: ${data.anime}, Fighters: ${data.fighters.join(" vs ")}`;
-    };
-
-    document.getElementById("uploadForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const formData = new FormData(document.getElementById("uploadForm"));
-
-      const res = await fetch("/upload_episodes", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-      uploadedFiles = data.saved_files.map(f => f.split("/").pop());
-      document.getElementById("uploadStatus").innerText =
-        `Uploaded ${uploadedFiles.length} episode(s).`;
-    };
-
-    
-    document.getElementById("compileBtn").onclick = async () => {
-      const tsRes = await fetch("/get_timestamps", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(animeData)
-      });
-
-      const { timestamps } = await tsRes.json();
-
-      const compileRes = await fetch("/compile_fight", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          timestamps,
-          video_files: uploadedFiles
-        })
-      });
-
-      const data = await compileRes.json();
-      const videoUrl = `/output/${data.output_file}`;
-
-      document.getElementById("result").innerHTML = `
-        <h3>✅ Your fight is ready:</h3>
-        <video controls width="600" src="${videoUrl}"></video>
-        <br>
-        <a href="${videoUrl}" download>Download Video</a>
-      `;
-    };
-  </script>
+  
+  <script src="{{ url_for('static', filename='upload.js') }}"></script>
 </body>
 </html>
