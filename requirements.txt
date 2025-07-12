@@ -1,0 +1,14 @@
+flask
+librosa
+numpy
+matplotlib
+opencv-python
+moviepy
+transformers
+torch
+whisper
+pandas
+requests
+beautifulsoup4
+python-dotenv
+notebook
