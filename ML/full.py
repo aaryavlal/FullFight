@@ -22,35 +22,28 @@ def full_fight_scene_pipeline(
     fight_prob_threshold=0.8,
     verbose=True
 ):
-    # extract_frames(name=input_video_path)
+    extract_frames(name=input_video_path)
     
-    # 1) Detect angry sections & write angry_sections.csv
-    # detect_angry_sections(
-    #     input_video=input_video_path,
-    #     csv_filename=angry_csv,
-    #     anger_threshold=anger_threshold,
-    #     merge_gap=merge_gap,
-    #     top_n_sections=top_n_angry_sections,
-    #     whisper_model_size=whisper_model_size,
-    #     verbose=verbose
-    # )
+    #Detect angry sections & write angry_sections.csv
+    detect_angry_sections(
+        input_video=input_video_path,
+        csv_filename=angry_csv,
+        anger_threshold=anger_threshold,
+        merge_gap=merge_gap,
+        top_n_sections=top_n_angry_sections,
+        whisper_model_size=whisper_model_size,
+        verbose=verbose
+    )
     
-    
-
-    # 2) Extract frames (if not done) and compute motion.csv
-    if not os.path.exists(frames_dir) or len(os.listdir(frames_dir)) == 0:
-        # You need to extract frames from video first (ffmpeg or cv2)
-        # Example: os.system(f"ffmpeg -i {input_video_path} -vf fps={fps} {frames_dir}/frame_%04d.png")
-        
+    # gen
+    if not os.path.exists(frames_dir) or len(os.listdir(frames_dir)) == 0:        
         raise RuntimeError(f"Frames folder '{frames_dir}' is empty, extract frames before running motion extraction")
 
-    # generate_motion_csv(frame_dir=frames_dir, output_path=motion_csv, fps=fps)
-    # generate_audio_rms_csv(input_video=input_video_path, csv_filename=rms_csv, plot=False)
-    # generate_frame_brightness_csv(name=frames_dir, csv_filename=brightness_csv, plot=False)
+    generate_motion_csv(frame_dir=frames_dir, output_path=motion_csv, fps=fps)
+    generate_audio_rms_csv(input_video=input_video_path, csv_filename=rms_csv, plot=False)
+    generate_frame_brightness_csv(name=frames_dir, csv_filename=brightness_csv, plot=False)
 
-    # 3) Assume audio RMS and brightness CSVs are generated externally or add those steps here
-
-    # 4) Merge all features into merged CSV
+    # Merge all features into merged CSV
     merge_features_to_csv(
         anger_csv=angry_csv,
         motion_csv=motion_csv,
@@ -62,7 +55,7 @@ def full_fight_scene_pipeline(
         verbose=verbose
     )
 
-    # 5) Load model and predict fight scenes
+    # Load model and predict fight scenes
     clf = joblib.load(model_path)
     new_df = pd.read_csv(merged_csv)
 
