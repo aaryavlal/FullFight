@@ -1,115 +1,107 @@
-# 🥊 FullFight.AI
+# FullFight.AI
 
 ## 🔎 Overview
 
-**FullFight.AI** is an end-to-end pipeline for extracting, analyzing, and compiling fight scenes from anime episodes using machine learning, audio/video processing, and NLP. The project includes a Flask web backend, a modern HTML/CSS/JS frontend, and a Jupyter notebook for feature extraction and labeling.
+**FullFight.AI** is an end-to-end AI pipeline for extracting, analyzing, and compiling fight scenes from anime episodes. It integrates machine learning, audio/video signal processing, NLP, and a full-stack web platform. Users upload episodes via a Flask-based interface and receive curated fight highlight reels—automatically generated.
 
 ---
 
 ## 🚀 Features
 
-- **🌐 Web Interface:** Upload anime episodes and submit fight queries.
-- **🎞️ Audio/Video Feature Extraction:** Extracts frame brightness, audio RMS, and dialogue/emotion features.
-- **🗣️ Dialogue & Emotion Analysis:** Uses Whisper and a transformer-based emotion classifier to detect angry dialogue.
-- **🔗 Data Merging & Labeling:** Merges features into a single CSV and labels fight scenes.
-- **📊 Visualization:** Jupyter notebook cells for plotting and exploring features.
-- **✂️ Video Editing:** Clips and compiles fight scenes based on detected timestamps.
-- **🤖 ML Model Integration:** Prepares labeled data for downstream modeling.
+- **Web Interface**: Upload anime episodes and request fight scene extraction  
+- **Feature Extraction**:
+  - Audio RMS (librosa)  
+  - Frame brightness (OpenCV)  
+  - Motion (optical flow via OpenCV Farneback)  
+  - Dialogue/emotion (anger detection using Whisper + transformer)
+- **Automated Labeling**: Combines rule-based thresholds and ML models to label fight segments  
+- **Visualization**: Interactive Jupyter notebook for plotting and feature tuning  
+- **Video Compilation**: Clips and compiles fight scenes into highlight reels using ffmpeg  
+- **ML Integration**: Trains a `RandomForestClassifier` on self-collected and labeled data
 
 ---
 
 ## 🛠️ Tech Stack
 
-### 🐍 Backend
+### Backend
 
-- **Flask:** Web server and API endpoints.
-- **Python Libraries:**
-  - `ffmpeg-python` — Video/audio processing.
-  - `librosa` — Audio analysis (RMS).
-  - `opencv-python` — Frame extraction and brightness calculation.
-  - `transformers`, `torch` — NLP and emotion classification.
-  - `whisper` — Speech-to-text transcription.
-  - `pandas`, `numpy` — Data manipulation and analysis.
+- **Flask** – Web server and API endpoints  
+- **Python libraries**:
+  - `ffmpeg-python` – video/audio processing  
+  - `librosa` – audio RMS extraction  
+  - `opencv-python` – brightness and optical flow  
+  - `whisper` – speech transcription  
+  - `transformers`, `torch` – emotion classification  
+  - `pandas`, `numpy` – data manipulation  
 
-### 💻 Frontend
+### Frontend
 
-- **HTML5/CSS3:** Responsive UI (`templates/index.html`, `static/style.css`).
-- **JavaScript:** Handles file uploads, API calls, and dynamic UI updates.
+- **HTML5/CSS3** – Responsive UI (`templates/index.html`, `static/style.css`)  
+- **JavaScript** – File uploads, API calls, and dynamic UI updates (`static/upload.js`)  
 
-### 📊 Data Science
+### Data Science & ML
 
-- **Jupyter Notebook:** For feature extraction, merging, labeling, and visualization.
-- **matplotlib/seaborn:** Data visualization.
-- **pandas:** Data wrangling.
+- **Jupyter Notebook** – Feature extraction, merging, labeling, visualization, and training  
+- **scikit-learn** – `RandomForestClassifier` model  
+- **pandas**, **matplotlib**, **seaborn** – Data wrangling and visualization  
 
 ---
 
-## 🗂️ Directory Structure
+## 📂 Directory Structure
 
-```
 FullFight/
 │
-├── app.py                  # Flask backend
-├── requirements.txt        # Python dependencies
+├── app.py # Flask backend (upload, processing, endpoints)
+├── requirements.txt # Project dependencies
 ├── templates/
-│   └── index.html          # Frontend HTML
+│ └── index.html # Web UI
 ├── static/
-│   ├── style.css           # Frontend CSS
-│   └── upload.js           # Frontend JS
-├── uploads/                # Uploaded video files
-├── output/                 # Output video clips
-├── utils/
-│   └── video_editor.py     # Video clipping utilities
-├── ML/
-│   └── fullflight.ipynb    # Jupyter notebook for feature extraction & labeling
-├── audio_rms.csv           # Audio RMS features
-├── frame_brightness.csv    # Frame brightness features
-├── angry_sections.csv      # Dialogue/emotion features
-├── merged_features.csv     # Merged features
-└── labeled_features.csv    # Labeled dataset
-```
+│ ├── style.css # Frontend styles
+│ └── upload.js # Frontend logic
+├── uploads/ # Uploaded video files
+├── output/ # Generated highlight clips
+├── fullflight.ipynb # Notebook for extraction, analysis, labeling, modeling
+├── fullflight2.ip # Functions to be used in full.py
+├── full.py # Full pipeline, utlized trained model, and custom data collection functions
+├── audio_rms.csv # Extracted audio features
+├── frame_brightness.csv # Extracted brightness features
+├── optical_flow.csv # Extracted motion features
+├── angry_sections.csv # Extracted emotion features
+├── normalized_merged_data.csv # Combined feature set
+└── rf_fight_scene_model.mkl # Trained model
 
-
-
-
----
-
-## 📁 Key Files & Their Roles
-
-- **`app.py`** → Main Flask app, handles routes for parsing, uploading, and compiling.
-- **`video_editor.py`** → Extracts video clips around fight timestamps.
-- **`fullflight.ipynb`** → Notebook for extracting features, merging, labeling, and visualization.
-- **`index.html / style.css / upload.js`** → Frontend for user interaction.
 
 ---
 
 ## 🔄 Data Pipeline
 
-1. **📤 Upload Video:** User uploads anime episode via web UI.
-2. **📈 Feature Extraction:** Notebook extracts audio RMS, frame brightness, and dialogue/emotion features.
-3. **📝 Merge & Label:** Features are merged and labeled as fight/non-fight.
-4. **🔍 Visualization:** Data is visualized for inspection and model training.
-5. **✂️ Video Editing:** Clips are extracted around detected fight timestamps.
-6. **🧠 Modeling:** Labeled CSV is ready for ML model training.
+1. **Upload Video** – Users upload anime episodes via the web UI  
+2. **Feature Extraction** – Notebook extracts audio RMS, brightness, motion, emotion  
+3. **Merge & Label** – Combined CSV is labeled using a mix of thresholds and manual annotation  
+4. **Visualization** – Features are plotted, inspected, and thresholds are refined  
+5. **Model Training** – `RandomForestClassifier` is trained on labeled data  
+6. **Video Compilation** – Clips for detected fight scenes are extracted with ffmpeg
 
 ---
 
 ## 💡 Notes
 
-- **Emotion Model:** Uses `cardiffnlp/twitter-roberta-base-emotion` for anger detection.
-- **Speech-to-Text:** Uses OpenAI Whisper.
-- **Video Editing:** Uses ffmpeg for fast, lossless clipping.
-- **Labeling Logic:** Fight scenes are labeled if any of:
-  - Segment Anger Score > 0.5
-  - Brightness > 150
-  - RMS > -20
+- **Data Collection**: We manually reviewed and labeled each scene based on emotion, brightness, motion, and audio levels  
+- **Emotion Detection:** Uses `cardiffnlp/twitter-roberta-base-emotion` on Whisper transcripts  
+- **Motion Estimation:** Utilizes OpenCV Farneback for optical flow magnitude  
+- **Modeling:** `RandomForestClassifier` trained on features [RMS, brightness, flow, emotion]  
+- **Labeling Rules**: A scene is flagged as “fight” if it satisfies at least one of:
+  - Anger score > 0.5  
+  - Brightness > 150  
+  - RMS > –20 dB  
+  - Optical flow above an empirically tuned threshold  
 
 ---
 
 ## 👨‍💻 Authors
 
-- Aaryav Lal
-- Dhyan Soni
-- Aditya Srivastava 
+- Aaryav Lal  
+- Dhyan Soni  
+- Aditya Srivastava
 
 ---
