@@ -1,8 +1,16 @@
 import os
 import joblib
 import pandas as pd
-from fullflight2 import get_video, detect_angry_sections, generate_motion_csv, merge_features_to_csv, generate_audio_rms_csv, generate_frame_brightness_csv, extract_frames, filter_spaced_timestamps
-
+from fullflight2 import (
+    get_video,
+    detect_angry_sections,
+    generate_motion_csv,
+    merge_features_to_csv,
+    generate_audio_rms_csv,
+    generate_frame_brightness_csv,
+    extract_frames,
+    filter_spaced_timestamps
+)
 
 def full_fight_scene_pipeline(
     input_video_path,
@@ -22,9 +30,12 @@ def full_fight_scene_pipeline(
     fight_prob_threshold=0.8,
     verbose=True
 ):
-    extract_frames(name=input_video_path)
-    
-    #Detect angry sections & write angry_sections.csv
+    # Step 1: Extract frames
+    extracted = extract_frames(name=input_video_path, frame_dir=frames_dir)
+    if not extracted:
+        raise RuntimeError("No frames were extracted — check video format or FFmpeg")
+
+    # Step 2: Detect angry sections & save CSV
     detect_angry_sections(
         input_video=input_video_path,
         csv_filename=angry_csv,
@@ -34,16 +45,13 @@ def full_fight_scene_pipeline(
         whisper_model_size=whisper_model_size,
         verbose=verbose
     )
-    
-    # gen
-    if not os.path.exists(frames_dir) or len(os.listdir(frames_dir)) == 0:        
-        raise RuntimeError(f"Frames folder '{frames_dir}' is empty, extract frames before running motion extraction")
 
+    # Step 3: Generate features
     generate_motion_csv(frame_dir=frames_dir, output_path=motion_csv, fps=fps)
-    generate_audio_rms_csv(input_video=input_video_path, csv_filename=rms_csv, plot=False)
+    generate_audio_rms_csv(name=input_video_path, csv_filename=rms_csv, plot=False)
     generate_frame_brightness_csv(name=frames_dir, csv_filename=brightness_csv, plot=False)
 
-    # Merge all features into merged CSV
+    # Step 4: Merge features into one CSV
     merge_features_to_csv(
         anger_csv=angry_csv,
         motion_csv=motion_csv,
@@ -55,14 +63,14 @@ def full_fight_scene_pipeline(
         verbose=verbose
     )
 
-    # Load model and predict fight scenes
+    # Step 5: Load model and predict fight scenes
     clf = joblib.load(model_path)
     new_df = pd.read_csv(merged_csv)
 
     new_df = new_df[
-        (new_df["Anger Score"] != 'n/a') & 
-        (new_df["RMS"] != 'n/a') & 
-        (new_df["Brightness"] != 'n/a') & 
+        (new_df["Anger Score"] != 'n/a') &
+        (new_df["RMS"] != 'n/a') &
+        (new_df["Brightness"] != 'n/a') &
         (new_df["Motion"] != 'n/a')
     ]
 
@@ -77,14 +85,7 @@ def full_fight_scene_pipeline(
     fight_df = new_df[new_df["Fight Probability"] > fight_prob_threshold]
 
     if verbose:
-        print(f"Detected {len(fight_df)} probable fight scene frames above threshold {fight_prob_threshold}")
-        
+        print(f"\U0001f4aa Detected {len(fight_df)} probable fight scene frames above threshold {fight_prob_threshold}")
+
     results = filter_spaced_timestamps(fight_df, time_col="Time (s)", min_spacing=10)
-
     return results
-
-results = full_fight_scene_pipeline("uploads/[Kayoanime] Solo Leveling - S02E06 (1).mkv")
-
-print("Filtered timestamps spaced more than 10 seconds apart:")
-for t in results:
-    print(f"{t:.1f}")

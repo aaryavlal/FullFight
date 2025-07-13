@@ -27,13 +27,32 @@ def plot_time(x, y, xlabel, ylabel, title):
 frame_dir = "frames"
 os.makedirs(frame_dir, exist_ok=True)
 
-def extract_frames(name):
-    output_pattern = os.path.join(frame_dir, f"{os.path.basename(name)}_frame_%04d.png")
+def extract_frames(name, frame_dir="frames"):
+    os.makedirs(frame_dir, exist_ok=True)
 
-    ffmpeg.input(name) \
-        .output(output_pattern, vf='fps=1') \
-        .overwrite_output() \
-        .run()
+    output_pattern = os.path.join(
+        frame_dir, f"{os.path.basename(name)}_frame_%04d.png"
+    )
+
+    print(f"[DEBUG] Extracting frames from: {name}")
+    print(f"[DEBUG] Output pattern: {output_pattern}")
+
+    try:
+        ffmpeg.input(name) \
+            .output(output_pattern, vf='fps=1') \
+            .overwrite_output() \
+            .run(capture_stdout=True, capture_stderr=True)
+    except ffmpeg.Error as e:
+        print("[FFMPEG ERROR]", e.stderr.decode())
+        raise RuntimeError("FFmpeg failed to extract frames")
+
+    # Optional: list how many frames were written
+    extracted = [
+        f for f in os.listdir(frame_dir)
+        if f.endswith(".png") and os.path.basename(name) in f
+    ]
+    print(f"[DEBUG] Extracted {len(extracted)} frame(s).")
+    return extracted
 
 
 def generate_audio_rms_csv(name, csv_filename=None, plot=False):
@@ -56,36 +75,47 @@ def generate_audio_rms_csv(name, csv_filename=None, plot=False):
 
 
 # Save frame brightness to CSV only if a filename is explicitly provided
-def generate_frame_brightness_csv(name, csv_filename=None, plot=False):
+def generate_frame_brightness_csv(name, csv_filename=None, plot=False, frame_dir="frames"):
     brightness_data = []
-    if csv_filename is None:
-        for fname in sorted(os.listdir(frame_dir)):
-            if fname.endswith(".png"):
-                img = cv2.imread(os.path.join(frame_dir, fname))
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                brightness = np.mean(gray)
-                brightness_data.append(brightness)
-                
-            timestamps = [i * 1 for i in range(len(brightness_data))]
 
-        return brightness_data, timestamps
+    # Use either 1. in-memory return or 2. save to CSV
+    is_csv_output = csv_filename is not None
 
     for fname in sorted(os.listdir(frame_dir)):
-        if fname.endswith(".png"):
-            img = cv2.imread(os.path.join(frame_dir, fname))
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            brightness = np.mean(gray)
-            brightness_data.append(brightness)
+        if not fname.endswith(".png"):
+            continue
 
-    timestamps = [i * 0.1 for i in range(len(brightness_data))]
-    with open(csv_filename, mode='w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(["Time (s)", "Brightness"])
-        for t, b in zip(timestamps, brightness_data):
-            writer.writerow([t, b])
-            
-    if plot:
-        plot_time(timestamps, brightness_data, xlabel="Time (s)", ylabel="Brightness", title="Frame Brightness Over Time")
+        frame_path = os.path.join(frame_dir, fname)
+        print("[DEBUG] Loading frame:", frame_path)
+
+        img = cv2.imread(frame_path)
+        if img is None:
+            print(f"[WARNING] Skipping unreadable frame: {frame_path}")
+            continue
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        brightness = np.mean(gray)
+        brightness_data.append(brightness)
+
+    timestamps = [i * (0.1 if is_csv_output else 1) for i in range(len(brightness_data))]
+
+    if is_csv_output:
+        with open(csv_filename, mode='w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Time (s)", "Brightness"])
+            for t, b in zip(timestamps, brightness_data):
+                writer.writerow([t, b])
+
+        if plot:
+            plot_time(
+                timestamps,
+                brightness_data,
+                xlabel="Time (s)",
+                ylabel="Brightness",
+                title="Frame Brightness Over Time"
+            )
+    else:
+        return brightness_data, timestamps
 
 def get_frame_paths(frame_dir, ext="png"):
     frame_paths = sorted(glob.glob(os.path.join(frame_dir, f"*.{ext}")))
