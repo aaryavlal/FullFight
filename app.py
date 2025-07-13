@@ -92,7 +92,7 @@ def get_timestamps():
 @app.route('/compile_fight', methods=['POST'])
 def compile_fight():
     try:
-    
+        
         video_files = os.listdir(app.config['UPLOAD_FOLDER'])
         if not video_files:
             return jsonify(error='No video file uploaded'), 400
@@ -129,37 +129,37 @@ def serve_output(filename):
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 
-@app.route('/get_audio_rms')
-def get_audio_rms():
-    try:
-        df = pd.read_csv('audio_rms.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_audio_rms')
+# def get_audio_rms():
+#     try:
+#         df = pd.read_csv('audio_rms.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_brightness')
-def get_brightness():
-    try:
-        df = pd.read_csv('frame_brightness.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_brightness')
+# def get_brightness():
+#     try:
+#         df = pd.read_csv('frame_brightness.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_dialogue')
-def get_dialogue():
-    try:
-        df = pd.read_csv('angry_sections.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_dialogue')
+# def get_dialogue():
+#     try:
+#         df = pd.read_csv('angry_sections.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_merged_features')
-def get_merged_features():
-    try:
-        df = pd.read_csv('merged_features.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_merged_features')
+# def get_merged_features():
+#     try:
+#         df = pd.read_csv('merged_features.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
     
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
