@@ -108,8 +108,8 @@ FullFight/
 
 ## 👨‍💻 Authors
 
-- Aditya Srivatava
 - Aaryav Lal
 - Dhyan Soni
+- Aditya Srivastava 
 
 ---
