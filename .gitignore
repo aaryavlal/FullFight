@@ -1,2 +1,6 @@
 .env
 venv/
+uploads/
+__pycache__/
+*.pyc
+frames/
