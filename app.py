@@ -96,7 +96,7 @@ def get_timestamps():
 def compile_fight():
     try:
         data = request.get_json(force=True)
-        print("🔥 Compile request received with data:", data)
+        print(" Compile request received with data:", data)
 
         video_files = data.get('video_files', [])
         if not video_files:
@@ -119,7 +119,7 @@ def compile_fight():
             start = max(0, t - buffer)
             end = min(duration, t + buffer)
             timestamps.append({'start': start, 'end': end})
-            print(f"🎬 Clipping: {start:.1f}s → {end:.1f}s")
+            print(f"Clipping: {start:.1f}s → {end:.1f}s")
 
         # Extract and concatenate subclips
         subclips = [clip.subclip(ts['start'], ts['end']) for ts in timestamps]
@@ -131,7 +131,7 @@ def compile_fight():
         return jsonify(output_file=output_file)
 
     except Exception as e:
-        print(f"[❌ ERROR] {traceback.format_exc()}")
+        print(f"[ERROR] {traceback.format_exc()}")
         return jsonify(error=f"Compile error: {str(e)}"), 500
 
 

@@ -1,16 +1,8 @@
 import os
 import joblib
 import pandas as pd
-from fullflight2 import (
-    get_video,
-    detect_angry_sections,
-    generate_motion_csv,
-    merge_features_to_csv,
-    generate_audio_rms_csv,
-    generate_frame_brightness_csv,
-    extract_frames,
-    filter_spaced_timestamps
-)
+from fullflight2 import get_video, detect_angry_sections, generate_motion_csv, merge_features_to_csv, generate_audio_rms_csv, generate_frame_brightness_csv, extract_frames, filter_spaced_timestamps
+
 
 def full_fight_scene_pipeline(
     input_video_path,
@@ -30,24 +22,28 @@ def full_fight_scene_pipeline(
     fight_prob_threshold=0.8,
     verbose=True
 ):
-    """
-    Run the full ML pipeline to extract likely fight scene timestamps from a video.
-    Returns: List of timestamp floats (in seconds).
-    """
+    extract_frames(name=input_video_path)
+    
+    #Detect angry sections & write angry_sections.csv
+    detect_angry_sections(
+        input_video=input_video_path,
+        csv_filename=angry_csv,
+        anger_threshold=anger_threshold,
+        merge_gap=merge_gap,
+        top_n_sections=top_n_angry_sections,
+        whisper_model_size=whisper_model_size,
+        verbose=verbose
+    )
+    
+    # gen
+    if not os.path.exists(frames_dir) or len(os.listdir(frames_dir)) == 0:        
+        raise RuntimeError(f"Frames folder '{frames_dir}' is empty, extract frames before running motion extraction")
 
-    # Step 1: Check if frames are extracted — raise error if missing
-    if not os.path.exists(frames_dir) or len(os.listdir(frames_dir)) == 0:
-        raise RuntimeError(
-            f"Frames folder '{frames_dir}' is empty. "
-            f"Extract frames before running this pipeline."
-        )
+    generate_motion_csv(frame_dir=frames_dir, output_path=motion_csv, fps=fps)
+    generate_audio_rms_csv(input_video=input_video_path, csv_filename=rms_csv, plot=False)
+    generate_frame_brightness_csv(name=frames_dir, csv_filename=brightness_csv, plot=False)
 
-    # Step 2: [Optional] Generate motion/audio/brightness CSVs if needed
-    # generate_motion_csv(frame_dir=frames_dir, output_path=motion_csv, fps=fps)
-    # generate_audio_rms_csv(input_video=input_video_path, csv_filename=rms_csv, plot=False)
-    # generate_frame_brightness_csv(name=frames_dir, csv_filename=brightness_csv, plot=False)
-
-    # Step 3: Merge all features to a single CSV
+    # Merge all features into merged CSV
     merge_features_to_csv(
         anger_csv=angry_csv,
         motion_csv=motion_csv,
@@ -59,35 +55,36 @@ def full_fight_scene_pipeline(
         verbose=verbose
     )
 
-    # Step 4: Run the classifier on merged features
+    # Load model and predict fight scenes
     clf = joblib.load(model_path)
-    df = pd.read_csv(merged_csv)
+    new_df = pd.read_csv(merged_csv)
 
-    # Clean out incomplete rows
-    df = df[
-        (df["Anger Score"] != 'n/a') &
-        (df["RMS"] != 'n/a') &
-        (df["Brightness"] != 'n/a') &
-        (df["Motion"] != 'n/a')
+    new_df = new_df[
+        (new_df["Anger Score"] != 'n/a') & 
+        (new_df["RMS"] != 'n/a') & 
+        (new_df["Brightness"] != 'n/a') & 
+        (new_df["Motion"] != 'n/a')
     ]
 
-    # Convert columns to float
-    df["Anger Score"] = df["Anger Score"].astype(float)
-    df["RMS"] = df["RMS"].astype(float)
-    df["Brightness"] = df["Brightness"].astype(float)
-    df["Motion"] = df["Motion"].astype(float)
+    new_df["Anger Score"] = new_df["Anger Score"].astype(float)
+    new_df["RMS"] = new_df["RMS"].astype(float)
+    new_df["Brightness"] = new_df["Brightness"].astype(float)
+    new_df["Motion"] = new_df["Motion"].astype(float)
 
-    # Make predictions
-    features = df[["Anger Score", "RMS", "Brightness", "Motion"]]
-    df["Fight Probability"] = clf.predict_proba(features)[:, 1]
+    X_new = new_df[["Anger Score", "RMS", "Brightness", "Motion"]]
+    new_df["Fight Probability"] = clf.predict_proba(X_new)[:, 1]
 
-    # Filter for high-probability fight scenes
-    fight_df = df[df["Fight Probability"] > fight_prob_threshold]
+    fight_df = new_df[new_df["Fight Probability"] > fight_prob_threshold]
 
     if verbose:
-        print(f"🧠 Detected {len(fight_df)} probable fight-scene frames above threshold {fight_prob_threshold}")
-
-    # Step 5: Space out timestamps (e.g. no closer than 10s)
+        print(f"Detected {len(fight_df)} probable fight scene frames above threshold {fight_prob_threshold}")
+        
     results = filter_spaced_timestamps(fight_df, time_col="Time (s)", min_spacing=10)
 
     return results
+
+results = full_fight_scene_pipeline("uploads/[Kayoanime] Solo Leveling - S02E06 (1).mkv")
+
+print("Filtered timestamps spaced more than 10 seconds apart:")
+for t in results:
+    print(f"{t:.1f}")

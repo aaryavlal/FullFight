@@ -4,3 +4,5 @@ uploads/
 __pycache__/
 *.pyc
 frames/
+output/
+full.md 
