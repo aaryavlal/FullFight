@@ -49,6 +49,11 @@ def parse_fight():
 # ----------------------------
 # Upload episode videos
 # ----------------------------
+# Remove duplicate Flask app creation and index route
+# The correct app instance and index route are already defined above
+
+# Remove erroneous if block
+# The correct entry point is at the end of the file
 
 @app.route('/upload_episodes', methods=['POST'])
 def upload_episodes():
