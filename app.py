@@ -6,6 +6,8 @@ import traceback
 
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+from full import full_fight_scene_pipeline
+
 
 
 def time_str_to_seconds(time_str):
@@ -93,20 +95,28 @@ def get_timestamps():
 def compile_fight():
     try:
         
-        video_files = os.listdir(app.config['UPLOAD_FOLDER'])
-        if not video_files:
+        video_file = os.listdir(app.config['UPLOAD_FOLDER'])[0]
+        if not video_file:
             return jsonify(error='No video file uploaded'), 400
 
-        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_files[0])
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file[0])
         clip = VideoFileClip(video_path)
 
-  
-        timestamps = [
-            {"start": "00:00", "end": "04:57"},
-            {"start": "05:18", "end": "10:11"},
-            {"start": "12:09", "end": "15:14"},
-            {"start": "20:51", "end": "23:24"}
-        ]
+        results = full_fight_scene_pipeline(video_path)
+        
+        timestamps = []
+        for i in results:
+            buffer = 30
+            
+            print(f"{i:.1f}")
+            timestamps.append({"start": i-buffer, "end": i+buffer})
+        
+        # timestamps = [
+        #     {"start": "00:00", "end": "04:57"},
+        #     {"start": "05:18", "end": "10:11"},
+        #     {"start": "12:09", "end": "15:14"},
+        #     {"start": "20:51", "end": "23:24"}
+        # ]
 
 
         subclips = []
