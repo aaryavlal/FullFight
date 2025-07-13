@@ -6,6 +6,7 @@ import traceback
 
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+# Make sure full.py exists in the same directory as app.py
 from full import full_fight_scene_pipeline
 
 
@@ -94,48 +95,45 @@ def get_timestamps():
 @app.route('/compile_fight', methods=['POST'])
 def compile_fight():
     try:
-        
-        video_file = os.listdir(app.config['UPLOAD_FOLDER'])[0]
-        if not video_file:
-            return jsonify(error='No video file uploaded'), 400
+        data = request.get_json(force=True)
+        print("🔥 Compile request received with data:", data)
 
-        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file[0])
+        video_files = data.get('video_files', [])
+        if not video_files:
+            return jsonify(error='No video files received'), 400
+
+        video_file = video_files[0]
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file)
+
+        # Get predicted timestamps from ML
+        raw_results = full_fight_scene_pipeline(video_path)
+
+        # Open video to get duration
         clip = VideoFileClip(video_path)
+        duration = clip.duration
 
-        results = full_fight_scene_pipeline(video_path)
-        
+        # Buffer each timestamp ±30s (and clamp within video bounds)
         timestamps = []
-        for i in results:
-            buffer = 30
-            
-            print(f"{i:.1f}")
-            timestamps.append({"start": i-buffer, "end": i+buffer})
-        
-        # timestamps = [
-        #     {"start": "00:00", "end": "04:57"},
-        #     {"start": "05:18", "end": "10:11"},
-        #     {"start": "12:09", "end": "15:14"},
-        #     {"start": "20:51", "end": "23:24"}
-        # ]
+        buffer = 30
+        for t in raw_results:
+            start = max(0, t - buffer)
+            end = min(duration, t + buffer)
+            timestamps.append({'start': start, 'end': end})
+            print(f"🎬 Clipping: {start:.1f}s → {end:.1f}s")
 
-
-        subclips = []
-        for ts in timestamps:
-            start_sec = time_str_to_seconds(ts["start"])
-            end_sec = time_str_to_seconds(ts["end"])
-            subclip = clip.subclip(start_sec, end_sec)
-            subclips.append(subclip)
-
-        # Stitch together
+        # Extract and concatenate subclips
+        subclips = [clip.subclip(ts['start'], ts['end']) for ts in timestamps]
         final = concatenate_videoclips(subclips)
-        output_path = os.path.join(app.config['OUTPUT_FOLDER'], 'final_fight.mp4')
+        output_file = 'final_fight.mp4'
+        output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_file)
         final.write_videofile(output_path, codec="libx264", audio_codec="aac")
 
-        return jsonify(output_file='final_fight.mp4')
+        return jsonify(output_file=output_file)
 
     except Exception as e:
-        print(f"[❌ ERROR] {e}")
-        return jsonify(error=f"Compile error: {e}"), 500
+        print(f"[❌ ERROR] {traceback.format_exc()}")
+        return jsonify(error=f"Compile error: {str(e)}"), 500
+
 
 @app.route('/output/<path:filename>')
 def serve_output(filename):
