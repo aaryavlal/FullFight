@@ -6,6 +6,8 @@ import traceback
 
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+from full import full_fight_scene_pipeline
+
 
 
 def time_str_to_seconds(time_str):
@@ -92,21 +94,29 @@ def get_timestamps():
 @app.route('/compile_fight', methods=['POST'])
 def compile_fight():
     try:
-    
-        video_files = os.listdir(app.config['UPLOAD_FOLDER'])
-        if not video_files:
+        
+        video_file = os.listdir(app.config['UPLOAD_FOLDER'])[0]
+        if not video_file:
             return jsonify(error='No video file uploaded'), 400
 
-        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_files[0])
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file[0])
         clip = VideoFileClip(video_path)
 
-  
-        timestamps = [
-            {"start": "00:00", "end": "04:57"},
-            {"start": "05:18", "end": "10:11"},
-            {"start": "12:09", "end": "15:14"},
-            {"start": "20:51", "end": "23:24"}
-        ]
+        results = full_fight_scene_pipeline(video_path)
+        
+        timestamps = []
+        for i in results:
+            buffer = 30
+            
+            print(f"{i:.1f}")
+            timestamps.append({"start": i-buffer, "end": i+buffer})
+        
+        # timestamps = [
+        #     {"start": "00:00", "end": "04:57"},
+        #     {"start": "05:18", "end": "10:11"},
+        #     {"start": "12:09", "end": "15:14"},
+        #     {"start": "20:51", "end": "23:24"}
+        # ]
 
 
         subclips = []
@@ -132,37 +142,37 @@ def serve_output(filename):
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 
-@app.route('/get_audio_rms')
-def get_audio_rms():
-    try:
-        df = pd.read_csv('audio_rms.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_audio_rms')
+# def get_audio_rms():
+#     try:
+#         df = pd.read_csv('audio_rms.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_brightness')
-def get_brightness():
-    try:
-        df = pd.read_csv('frame_brightness.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_brightness')
+# def get_brightness():
+#     try:
+#         df = pd.read_csv('frame_brightness.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_dialogue')
-def get_dialogue():
-    try:
-        df = pd.read_csv('angry_sections.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_dialogue')
+# def get_dialogue():
+#     try:
+#         df = pd.read_csv('angry_sections.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
-@app.route('/get_merged_features')
-def get_merged_features():
-    try:
-        df = pd.read_csv('merged_features.csv')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/get_merged_features')
+# def get_merged_features():
+#     try:
+#         df = pd.read_csv('merged_features.csv')
+#         return jsonify(df.to_dict(orient='records'))
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
     
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
