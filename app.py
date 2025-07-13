@@ -102,9 +102,12 @@ def compile_fight():
 
   
         timestamps = [
-            {"start": "00:30", "end": "00:50"},
-            {"start": "10:00", "end": "12:20"}
+            {"start": "00:00", "end": "04:57"},
+            {"start": "05:18", "end": "10:11"},
+            {"start": "12:09", "end": "15:14"},
+            {"start": "20:51", "end": "23:24"}
         ]
+
 
         subclips = []
         for ts in timestamps:
