@@ -1,34 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>🎥 FullFight.AI</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <style>
+    #site-title {
+      text-decoration: none;
+      color: inherit;
+    }
+    #site-title:hover {
+      text-decoration: underline;
+      color: #e53935;
+    }
+    .align-center {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>FullFight.AI</h1>
-    </header>
+    <h1><a href="/about" id="site-title">🎥 FullFight.AI</a></h1>
 
-    <form id="uploadForm" enctype="multipart/form-data">
-      <label for="files">Upload your episode file:</label>
+    <form
+      id="uploadForm"
+      action="/upload_episodes"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <label for="file-input">Select episode files:</label>
       <input
         type="file"
-        id="files"
+        id="file-input"
         name="files"
         multiple
         required
       />
-      <button type="submit">Upload</button>
+      <button
+        type="submit"
+        id="upload-btn"
+      >
+        Upload Episodes
+      </button>
     </form>
+
     <div id="uploadStatus"></div>
 
     <div class="align-center">
-      <button type="button" id="compileBtn" disabled>
+      <button
+        type="button"
+        id="compile-btn"
+        disabled
+      >
         Compile (Trim)
       </button>
     </div>
+
     <div id="result"></div>
   </div>
 

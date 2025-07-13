@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>About - FullFight.AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: url("{{ url_for('static', filename='naruto.png') }}") no-repeat center center fixed;
+    background-size: cover;
+  }
+
+  .overlay {
+    background: rgba(0, 0, 0, 0.75); /* deep overlay */
+    color: #f2f2f2;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 800px;
+    margin: 80px auto;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+  }
+
+  .overlay h1 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    color: #e0b3ff;
+  }
+
+  .overlay p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #ccc;
+  }
+
+  .back-button {
+    display: inline-block;
+    margin-top: 25px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    background-color: #e53935;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+
+  .back-button:hover {
+    background-color: #b71c1c;
+  }
+</style>
+
+
+</head>
+<body>
+  <div class="overlay">
+  <h1>About FullFight.AI</h1>
+  <p>
+    FullFight.AI helps you quickly extract and compile the best anime fight scenes from full episodes using AI.
+    Upload your episodes, and once our machine learning model is ready, you'll be able to automatically detect and stitch together highlight fights.
+  </p>
+  <p>
+    It's built with Python, Flask, and MoviePy — optimized for creators, reviewers, and fans.
+  </p>
+  <a href="/" class="back-button">← Back to Upload</a>
+</div>
+
+</body>
+</html>
