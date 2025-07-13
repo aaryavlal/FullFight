@@ -1,37 +1,37 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>🎥 FullFight.AI</title>
-  <!-- make sure style.css lives in your Flask "static" folder -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>FullFight.AI</h1>
+  <div class="container">
+    <header>
+      <h1>FullFight.AI</h1>
+    </header>
 
+    <form id="uploadForm" enctype="multipart/form-data">
+      <label for="files">Upload your episode file:</label>
+      <input
+        type="file"
+        id="files"
+        name="files"
+        multiple
+        required
+      />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="uploadStatus"></div>
 
+    <div class="align-center">
+      <button type="button" id="compileBtn" disabled>
+        Compile (Trim)
+      </button>
+    </div>
+    <div id="result"></div>
+  </div>
 
- 
-  <form id="uploadForm" enctype="multipart/form-data">
-    <label for="files">Upload your episode file:</label><br>
-    <input
-      type="file"
-      id="files"
-      name="files"
-      multiple
-      required
-    />
-    <button type="submit">Upload</button>
-  </form>
-  <div id="uploadStatus"></div>
-
-  <button type="button" id="compile-btn" disabled>
-    Compile (Trim)
-  </button>
-  <div id="result"></div>
-
-  
   <script src="{{ url_for('static', filename='upload.js') }}"></script>
 </body>
 </html>
