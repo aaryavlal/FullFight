@@ -48,7 +48,7 @@
 ---
 
 ## 📂 Directory Structure
-
+```
 FullFight/
 │
 ├── app.py # Flask backend (upload, processing, endpoints)
@@ -69,7 +69,7 @@ FullFight/
 ├── angry_sections.csv # Extracted emotion features
 ├── normalized_merged_data.csv # Combined feature set
 └── rf_fight_scene_model.mkl # Trained model
-
+```
 
 ---
 
