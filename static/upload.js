@@ -6,9 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const compileBtn   = document.getElementById('compile-btn');
   const resultDiv    = document.getElementById('result');
 
-  // ----------------------------
-  // Upload handler
-  // ----------------------------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -33,9 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ----------------------------
-  // Compile handler
-  // ----------------------------
+
   compileBtn.addEventListener('click', async () => {
     if (!uploadedFiles.length) {
       return alert('Please upload episodes first.');
