@@ -1,107 +1,136 @@
 # FullFight.AI
 
-## 🔎 Overview
+**Automated fight scene extraction from anime episodes using multimodal machine learning.**
 
-**FullFight.AI** is an end-to-end AI pipeline for extracting, analyzing, and compiling fight scenes from anime episodes. It integrates machine learning, audio/video signal processing, NLP, and a full-stack web platform. Users upload episodes via a Flask-based interface and receive curated fight highlight reels—automatically generated.
-
----
-
-## 🚀 Features
-
-- **Web Interface**: Upload anime episodes and request fight scene extraction  
-- **Feature Extraction**:
-  - Audio RMS (librosa)  
-  - Frame brightness (OpenCV)  
-  - Motion (optical flow via OpenCV Farneback)  
-  - Dialogue/emotion (anger detection using Whisper + transformer)
-- **Automated Labeling**: Combines rule-based thresholds and ML models to label fight segments  
-- **Visualization**: Interactive Jupyter notebook for plotting and feature tuning  
-- **Video Compilation**: Clips and compiles fight scenes into highlight reels using ffmpeg  
-- **ML Integration**: Trains a `RandomForestClassifier` on self-collected and labeled data
+FullFight.AI is an end-to-end pipeline that ingests raw anime episode files and outputs compiled highlight reels — no manual clipping required. It fuses four independent signal streams (motion, audio, speech emotion, and brightness) into a unified scene classifier, then cuts and concatenates the detected segments via `ffmpeg`.
 
 ---
 
-## 🛠️ Tech Stack
+## How It Works
 
-### Backend
+Fight scenes have a consistent multimodal signature: fast motion, loud audio, angry dialogue, and high contrast frames. FullFight.AI extracts each of these independently, merges them into a feature matrix, and trains a `RandomForestClassifier` on hand-labeled data to detect that signature at scale.
 
-- **Flask** – Web server and API endpoints  
-- **Python libraries**:
-  - `ffmpeg-python` – video/audio processing  
-  - `librosa` – audio RMS extraction  
-  - `opencv-python` – brightness and optical flow  
-  - `whisper` – speech transcription  
-  - `transformers`, `torch` – emotion classification  
-  - `pandas`, `numpy` – data manipulation  
-
-### Frontend
-
-- **HTML5/CSS3** – Responsive UI (`templates/index.html`, `static/style.css`)  
-- **JavaScript** – File uploads, API calls, and dynamic UI updates (`static/upload.js`)  
-
-### Data Science & ML
-
-- **Jupyter Notebook** – Feature extraction, merging, labeling, visualization, and training  
-- **scikit-learn** – `RandomForestClassifier` model  
-- **pandas**, **matplotlib**, **seaborn** – Data wrangling and visualization  
+```
+Episode File (.mp4)
+       │
+       ├── Audio RMS          → librosa          → rms features
+       ├── Optical Flow       → OpenCV Farneback  → motion magnitude
+       ├── Frame Brightness   → OpenCV            → brightness features
+       └── Speech Emotion     → Whisper + RoBERTa → anger score
+                                      │
+                              Merge & Normalize
+                                      │
+                            RandomForestClassifier
+                                      │
+                              Fight / No-Fight
+                                      │
+                              ffmpeg clip + concat
+                                      │
+                           highlight_reel_output.mp4
+```
 
 ---
 
-## 📂 Directory Structure
+## Features
+
+- **Multimodal fusion** — motion, audio, brightness, and NLP emotion signals combined into a single feature vector per time window
+- **Self-supervised labeling** — rule-based thresholds bootstrap initial labels; model is trained on top
+- **Transformer emotion detection** — uses `cardiffnlp/twitter-roberta-base-emotion` on Whisper ASR transcripts to detect anger in dialogue
+- **Web interface** — Flask-based upload UI; drag, drop, get a highlight reel
+- **Interactive analysis** — Jupyter notebook for feature visualization, threshold tuning, and model inspection
+- **Zero manual editing** — `ffmpeg` handles all clip extraction and compilation
+
+---
+
+## Tech Stack
+
+| Layer | Tools |
+|---|---|
+| Backend | Flask, Python |
+| Video/Audio | ffmpeg-python, librosa, OpenCV |
+| Speech | Whisper (OpenAI), Transformers (HuggingFace) |
+| ML | scikit-learn (RandomForestClassifier), pandas, numpy |
+| Frontend | HTML5, CSS3, JavaScript |
+| Analysis | Jupyter, matplotlib, seaborn |
+
+---
+
+## Quickstart
+
+```bash
+git clone https://github.com/aaryavlal/FullFight.git
+cd FullFight
+pip install -r requirements.txt
+python app.py
+```
+
+Then open `http://localhost:5000`, upload an episode, and download your highlight reel.
+
+To retrain the model on new data:
+
+```bash
+jupyter notebook fullflight.ipynb
+# Run feature extraction → labeling → training cells in order
+```
+
+---
+
+## Pipeline Detail
+
+### 1. Feature Extraction
+Each episode is segmented into fixed time windows. For each window:
+- **Audio RMS** — root mean square energy via `librosa`
+- **Optical flow** — per-frame motion magnitude using Farneback dense flow
+- **Brightness** — mean pixel value of grayscale frames
+- **Emotion** — Whisper transcribes audio; `cardiffnlp/twitter-roberta-base-emotion` scores anger probability
+
+### 2. Labeling
+A window is labeled `fight = 1` if any threshold is exceeded:
+- Anger score > 0.5
+- Brightness > 150
+- Audio RMS > −20 dB
+- Optical flow above empirically tuned threshold
+
+### 3. Training
+Features are merged, normalized, and fed into a `RandomForestClassifier`. The trained model is serialized to `rf_fight_scene_model.mkl`.
+
+### 4. Inference & Compilation
+`full.py` runs the trained model over new episodes, identifies fight windows, and uses `ffmpeg-python` to extract and concatenate the corresponding clips.
+
+---
+
+## Project Structure
+
 ```
 FullFight/
-│
-├── app.py # Flask backend (upload, processing, endpoints)
-├── requirements.txt # Project dependencies
-├── templates/
-│ └── index.html # Web UI
+├── app.py                      # Flask backend
+├── full.py                     # Full inference pipeline
+├── fullflight.ipynb            # Feature extraction, labeling, training
+├── fullflight2.ip              # Utility functions
+├── rf_fight_scene_model.mkl    # Trained model
+├── templates/index.html        # Upload UI
 ├── static/
-│ ├── style.css # Frontend styles
-│ └── upload.js # Frontend logic
-├── uploads/ # Uploaded video files
-├── output/ # Generated highlight clips
-├── fullflight.ipynb # Notebook for extraction, analysis, labeling, modeling
-├── fullflight2.ip # Functions to be used in full.py
-├── full.py # Full pipeline, utlized trained model, and custom data collection functions
-├── audio_rms.csv # Extracted audio features
-├── frame_brightness.csv # Extracted brightness features
-├── optical_flow.csv # Extracted motion features
-├── angry_sections.csv # Extracted emotion features
-├── normalized_merged_data.csv # Combined feature set
-└── rf_fight_scene_model.mkl # Trained model
+│   ├── style.css
+│   └── upload.js
+├── uploads/                    # Incoming episode files
+├── output/                     # Generated highlight reels
+├── audio_rms.csv
+├── frame_brightness.csv
+├── optical_flow.csv
+├── angry_sections.csv
+└── normalized_merged_data.csv
 ```
 
 ---
 
-## 🔄 Data Pipeline
+## Authors
 
-1. **Upload Video** – Users upload anime episodes via the web UI  
-2. **Feature Extraction** – Notebook extracts audio RMS, brightness, motion, emotion  
-3. **Merge & Label** – Combined CSV is labeled using a mix of thresholds and manual annotation  
-4. **Visualization** – Features are plotted, inspected, and thresholds are refined  
-5. **Model Training** – `RandomForestClassifier` is trained on labeled data  
-6. **Video Compilation** – Clips for detected fight scenes are extracted with ffmpeg
-
----
-
-## 💡 Notes
-
-- **Data Collection**: We manually reviewed and labeled each scene based on emotion, brightness, motion, and audio levels  
-- **Emotion Detection:** Uses `cardiffnlp/twitter-roberta-base-emotion` on Whisper transcripts  
-- **Motion Estimation:** Utilizes OpenCV Farneback for optical flow magnitude  
-- **Modeling:** `RandomForestClassifier` trained on features [RMS, brightness, flow, emotion]  
-- **Labeling Rules**: A scene is flagged as “fight” if it satisfies at least one of:
-  - Anger score > 0.5  
-  - Brightness > 150  
-  - RMS > –20 dB  
-  - Optical flow above an empirically tuned threshold  
-
----
-
-## 👨‍💻 Authors
-
-- Aaryav Lal  
-- Dhyan Soni  
+- [Aaryav Lal](https://github.com/aaryavlal)
+- Dhyan Soni
 - Aditya Srivastava
 
 ---
+
+## License
+
+MIT
