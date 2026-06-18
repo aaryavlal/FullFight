@@ -126,7 +126,7 @@ FullFight/
 ## Authors
 
 - [Aaryav Lal](https://github.com/aaryavlal)
-- Dhyan Soni
+- [Dhyan Soni](https://github.com/dhyantsoni)
 - Aditya Srivastava
 
 ---
